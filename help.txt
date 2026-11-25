@@ -1,0 +1,267 @@
+#Q4
+
+#define LED_PIN 11
+#define POTENTIOMETER_PIN A1
+
+void setup()
+{
+	pinMode(LED_PIN, OUTPUT);
+}
+void loop()
+{
+    int potentiometerValue = analogRead(POTENTIOMETER_PIN);
+    int brightness = potentiometerValue / 4;
+    analogWrite(LED_PIN, brightness);
+}
+
+
+#Q5
+
+byte ledPin[] = {4,5,6,7,8,9,10,11};
+int ledDelay = 65;
+int direction = 1;
+int currentLED;
+
+unsigned long changeTime;
+
+void setup()
+{
+	for (int x=0; x<8; x++)
+	{
+    	pinMode(ledPin[x], OUTPUT);
+    }
+	changeTime = millis();
+}
+void changeLED()
+{
+  for (int x=0; x<8; x++)
+  {
+  	digitalWrite(ledPin[x], LOW);
+  }
+  digitalWrite(ledPin[currentLED], HIGH);
+  currentLED += direction;
+  if (currentLED == 9)
+  {
+  	direction = -1;
+  }
+
+  if (currentLED == 0)
+  {
+  	direction = 1;
+  }
+}
+
+void loop()
+{
+  if ((millis() - changeTime)> ledDelay)
+  {
+    changeLED();
+    changeTime = millis();
+  }
+}
+
+#Q6
+
+int cm = 0;
+
+long readUltrasonicDistance(int triggerPin, int echoPin)
+{
+  pinMode(triggerPin, OUTPUT);
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+
+  return pulseIn(echoPin, HIGH);
+}
+
+void setup()
+{
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  cm = 0.01715 * readUltrasonicDistance(7, 7);
+  Serial.print(cm);
+  Serial.println("cm");
+  delay(100);
+}
+
+#Q7
+
+#include <Servo.h>
+Servo myServo;
+int potPin = A0;
+void setup()
+{
+  myServo.attach(9);
+  Serial.begin(9600);
+}
+void loop()
+{
+  int potVal = analogRead(potPin);
+  int angle = map(potVal, 0, 1023, 0, 180);
+  myServo.write(angle);
+  Serial.print("Servo angle: ");
+  Serial.println(angle);
+  delay(15);
+}
+
+#Q8
+
+const int PIR_PIN = 7;
+const int BUZZER_PIN = 8;
+const int LED_PIN = 13;
+void setup()
+{
+  pinMode(PIR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  Serial.begin(9600);
+  delay(2000);
+  Serial.println("Alarm system armed!");
+}
+void loop()
+{
+  int motionDetected = digitalRead(PIR_PIN);
+  if (motionDetected == HIGH)
+  {
+    digitalWrite(LED_PIN, HIGH);
+    Serial.println("MOTION DETECTED - ALARM!");
+    tone(BUZZER_PIN, 1000, 500);
+    delay(600);
+  }
+  else
+  {
+    digitalWrite(LED_PIN, LOW);
+    noTone(BUZZER_PIN);
+  }
+}
+
+#Q9
+
+const int tempPin = A0;
+const int greenLED = 8;
+const int redLED = 9;
+
+void setup(){
+  pinMode(greenLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop(){
+  int sensorValue = analogRead(tempPin);
+  float voltage = sensorValue * 5.0 / 1024.0;
+  float temperature = (voltage - 0.5) * 100.0;
+  Serial.print("Temperature: ");
+
+  Serial.print(temperature);
+  Serial.println(" °C");
+  if(temperature > 25){
+    digitalWrite(greenLED, HIGH);
+    digitalWrite(redLED, LOW);
+    Serial.println("AC Status: ON");
+  }
+  else{
+    digitalWrite(greenLED, LOW);
+    digitalWrite(redLED, HIGH);
+    Serial.println("AC Status: OFF");
+  }
+
+  Serial.println("----------------");
+  delay(1000);
+}
+
+#MINI PROJECT
+
+const int tempPin = A0;
+const int pirPin = 2;
+const int greenLED = 9;
+const int redLED = 8;
+const int fanPin = 11;
+
+const float FAN_ON_TEMP = 30.0;
+const float FAN_OFF_TEMP = 28.0;
+
+const unsigned long LIGHT_TIMEOUT = 10000;
+
+bool fanState = false;
+bool lightState = false;
+
+unsigned long lastMotionTime = 0;
+unsigned long lastReportTime = 0;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(pirPin, INPUT);
+  pinMode(greenLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(fanPin, OUTPUT);
+
+  digitalWrite(greenLED, LOW);
+  digitalWrite(redLED, LOW);
+  digitalWrite(fanPin, LOW);
+  delay(2000);
+  
+  Serial.println("Smart Home Monitoring System");
+  Serial.println("----------------------------");
+}
+
+void loop() {
+  int sensorValue = analogRead(tempPin);
+  float voltage = sensorValue * (5.0 / 1023.0);
+  float temperature = (voltage - 0.5) * 100.0;
+
+  int motion = digitalRead(pirPin);
+  unsigned long currentTime = millis();
+
+  if (motion == HIGH) {
+    lastMotionTime = currentTime;
+    lightState = true;
+  } else if (currentTime - lastMotionTime >= LIGHT_TIMEOUT) {
+    lightState = false;
+  }
+
+  if (temperature >= FAN_ON_TEMP) {
+    fanState = true;
+  } else if (temperature <= FAN_OFF_TEMP) {
+    fanState = false;
+  }
+
+  digitalWrite(greenLED, lightState ? HIGH : LOW);
+  digitalWrite(fanPin, fanState ? HIGH : LOW);
+
+  if (temperature > 35.0) {
+    digitalWrite(redLED, HIGH);
+  } else {
+    digitalWrite(redLED, LOW);
+  }
+
+  if (currentTime - lastReportTime >= 1000) {
+    lastReportTime = currentTime;
+
+    Serial.print("Temperature: ");
+    Serial.print(temperature);
+    Serial.println(" C");
+
+    Serial.print("Motion: ");
+    Serial.println(motion == HIGH ? "Detected" : "Not detected");
+
+    Serial.print("Smart Light: ");
+    Serial.println(lightState ? "ON" : "OFF");
+
+    Serial.print("Fan: ");
+    Serial.println(fanState ? "ON" : "OFF");
+
+    Serial.print("Temperature Alert: ");
+    Serial.println(temperature > 35.0 ? "HIGH" : "NORMAL");
+
+    Serial.println("----------------------------");
+  }
+}
