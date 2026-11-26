@@ -21,35 +21,26 @@ temp_noise = np.random.normal(0, 1.5, n_records)
 temperature = temp_trend + temp_noise
 
 # Create synthetic humidity (negatively correlated with temperature with noise)
+temp_trend = 20 + 5 * np.sin(np.linspace(0, 10 * np.pi, n_records))
 humid_trend = 65 - 15 * np.sin(np.linspace(0, 10 * np.pi, n_records))
 humid_noise = np.random.normal(0, 3.0, n_records)
 humidity = np.clip(humid_trend + humid_noise, 0, 100)
 
-# Construct the simplified DataFrame without 'sensor_id'
+# Construct the DataFrame using the high-precision timestamps directly
 data = pd.DataFrame({
-    'date': timestamps.strftime('%d.%m.%Y'),
-    'time': timestamps.strftime('%H:%M:%S'),
+    'timestamp': timestamps,
     'temperature (c)': temperature,
     'humidity (%)': humidity
 })
 
 print("Simplified synthetic dataset generated successfully (noise retained)!")
 print("Dataset shape:", data.shape)
-data.head()
+display(data.head())
 
-import pandas as pd
+# Sort chronologically and reset the index to prepare the data
+data = data.sort_values('timestamp').reset_index(drop=True)
 
-# Combine date and time string columns into a single datetime timestamp column
-data['timestamp'] = pd.to_datetime(
-    data['date'] + ' ' + data['time'],
-    format='%d.%m.%Y %H:%M:%S',
-    errors='coerce'
-)
-
-# Drop rows with invalid timestamps and sort chronologically
-data = data.dropna(subset=['timestamp']).sort_values('timestamp').reset_index(drop=True)
-
-print("Synthetic dataset prepared successfully (timestamp restored)!")
+print("Synthetic dataset prepared successfully (direct timestamps used)!")
 print("Total records:", len(data))
 display(data.head())
 
